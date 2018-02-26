@@ -11,6 +11,8 @@ import Parse
 class LoggedinViewController: UIViewController, UITableViewDataSource {
 
     @IBOutlet weak var tableView: UITableView!
+    var refreshControl: UIRefreshControl!
+
     var posts: [PFObject]?
     
     @IBAction func onCompose(_ sender: Any) {
@@ -23,16 +25,23 @@ class LoggedinViewController: UIViewController, UITableViewDataSource {
     override func viewDidLoad() {
         super.viewDidLoad()
         tableView.dataSource = self
-        //self.tableView.reloadData()
-
-        //navigationController?.navigationBar.isHidden = false
-        // Do any additional setup after loading the view.
+        refreshControl = UIRefreshControl()
+        refreshControl.addTarget(self, action: #selector(LoggedinViewController.didPullToRefresh(_:)), for: .valueChanged)
+        
+        tableView.insertSubview(refreshControl, at: 0)
+        fetchPost()
+    }
+    @objc func didPullToRefresh(_ refreshControl: UIRefreshControl) {
+        fetchPost()
+    }
+    
+    func fetchPost() {
+        //self.activityIndicator.startAnimating()
         // construct PFQuery
         let query = Post.query()
         query?.order(byDescending: "createdAt")
         query?.includeKey("author")
         query?.limit = 20
-        
         // fetch data asynchronously
         query?.findObjectsInBackground { (posts: [PFObject]?, error: Error?) -> Void in
             self.posts = posts
@@ -40,17 +49,21 @@ class LoggedinViewController: UIViewController, UITableViewDataSource {
                 // do something with the array of object returned by the call
                 for post in posts {
                     // access the object as a dictionary and cast type
-                   print(post.value(forKey: "caption") as! String)
-                   //post.value(forKey: "image") as! UIImage
-                
+                    print(post.value(forKey: "caption") as! String)
+                    //post.value(forKey: "image") as! UIImage
+                    
                 }
                 self.tableView.reloadData()
+                self.refreshControl.endRefreshing()
+
             } else {
                 // handle error
                 print("No Posts")
             }
         }
+        
     }
+    
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         if(posts != nil){
             return (posts?.count)!
@@ -65,26 +78,26 @@ class LoggedinViewController: UIViewController, UITableViewDataSource {
             let cell = tableView.dequeueReusableCell(withIdentifier: "PostCellTableViewCell", for: indexPath) as! PostCellTableViewCell
             let post = posts![indexPath.row]
             let caption = post.value(forKey: "caption")
-            let picture = post.value(forKey: "media") as! PFFile
+            let picture = post.value(forKey: "media") as? PFFile
             if(picture != nil) {
-                picture.getDataInBackground({ (imageData: Data?, error: Error?) -> Void in
-                let image = UIImage(data: imageData!)
-                if image != nil {
-                    cell.picture.image = image
-                }
+                picture!.getDataInBackground({ (imageData: Data?, error: Error?) -> Void in
+                    if(imageData != nil) {
+                        let image = UIImage(data: imageData!)
+                        cell.picture.image = image
+                    }
             })
             }
             
-            cell.caption.text = caption as! String
+            cell.caption.text = caption as? String
             
             return cell
         }
-        //cell.caption.text = "nothing"
         let cell = tableView.dequeueReusableCell(withIdentifier: "PostCellTableViewCell", for: indexPath) as! PostCellTableViewCell
 
         return cell
     }
 
+    
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
         // Dispose of any resources that can be recreated.
