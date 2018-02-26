@@ -24,9 +24,55 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
                 configuration.server = "https://protected-waters-77595.herokuapp.com/parse"
             })
         )
+        // check if user is logged in.
+       //PFUser.logOut()
+        if PFUser.current() != nil {
+            let storyboard = UIStoryboard(name: "Main", bundle: nil)
+            // view controller currently being set in Storyboard as default will be overridden
+            //   let loggedInViewController = storyboard.instantiateViewController(withIdentifier: "tabBar")
+            // self.window?.rootViewController = loggedInViewController
+            let loginViewController = storyboard.instantiateViewController(withIdentifier: "tabBar")//PUT_YOUR_LOGIN_VC_ID_HERE
+            window?.rootViewController = loginViewController
+
+        }
+        NotificationCenter.default.addObserver(forName: Notification.Name("didLogout"), object: nil, queue: OperationQueue.main) { (Notification) in
+            print("Logout notification received")
+            // TODO: Logout the User
+            // TODO: Load and show the login view controller
+            self.logOut()
+        }
+        NotificationCenter.default.addObserver(forName: Notification.Name("didCancel"), object: nil, queue: OperationQueue.main) { (Notification) in
+            print("Cancel")
+            self.goToHomeFeed()
+        }
+        NotificationCenter.default.addObserver(forName: Notification.Name("didShare"), object: nil, queue: OperationQueue.main) { (Notification) in
+            print("Share")
+            self.goToHomeFeed()
+        }
         return true
     }
-
+    func goToHomeFeed() {
+        let storyboard = UIStoryboard(name: "Main", bundle: nil)
+        // view controller currently being set in Storyboard as default will be overridden
+        //   let loggedInViewController = storyboard.instantiateViewController(withIdentifier: "tabBar")
+        // self.window?.rootViewController = loggedInViewController
+        let loginViewController = storyboard.instantiateViewController(withIdentifier: "tabBar")//PUT_YOUR_LOGIN_VC_ID_HERE
+        window?.rootViewController = loginViewController
+    }
+    func logOut() {
+    // Logout the current user
+        PFUser.logOutInBackground(block: { (error) in
+        if let error = error {
+            print(error.localizedDescription)
+        } else {
+            print("Successful loggout")
+            // Load and show the login view controller
+            let storyboard = UIStoryboard(name: "Main", bundle: nil)
+            let loginViewController = storyboard.instantiateViewController(withIdentifier: "login")//PUT_YOUR_LOGIN_VC_ID_HERE
+            self.window?.rootViewController = loginViewController
+        }
+        })
+    }
     func applicationWillResignActive(_ application: UIApplication) {
         // Sent when the application is about to move from active to inactive state. This can occur for certain types of temporary interruptions (such as an incoming phone call or SMS message) or when the user quits the application and it begins the transition to the background state.
         // Use this method to pause ongoing tasks, disable timers, and invalidate graphics rendering callbacks. Games should use this method to pause the game.

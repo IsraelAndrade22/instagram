@@ -8,23 +8,81 @@
 
 import UIKit
 import Parse
-class LoggedinViewController: UIViewController {
+class LoggedinViewController: UIViewController, UITableViewDataSource {
 
+    @IBOutlet weak var tableView: UITableView!
+    var posts: [PFObject]?
+    
+    @IBAction func onCompose(_ sender: Any) {
+        self.performSegue(withIdentifier: "composeSegue", sender: nil)
+    }
     @IBAction func onLogout(_ sender: Any) {
-        PFUser.logOutInBackground { (error: Error?) in
-            if(PFUser.current() == nil) {
-                print("You're logged out")
-                self.performSegue(withIdentifier: "logoutSegue", sender: nil)
+        NotificationCenter.default.post(name: NSNotification.Name("didLogout"), object: nil)
+    }
+    
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        tableView.dataSource = self
+        //self.tableView.reloadData()
 
+        //navigationController?.navigationBar.isHidden = false
+        // Do any additional setup after loading the view.
+        // construct PFQuery
+        let query = Post.query()
+        query?.order(byDescending: "createdAt")
+        query?.includeKey("author")
+        query?.limit = 20
+        
+        // fetch data asynchronously
+        query?.findObjectsInBackground { (posts: [PFObject]?, error: Error?) -> Void in
+            self.posts = posts
+            if let posts = posts {
+                // do something with the array of object returned by the call
+                for post in posts {
+                    // access the object as a dictionary and cast type
+                   print(post.value(forKey: "caption") as! String)
+                   //post.value(forKey: "image") as! UIImage
+                
+                }
+                self.tableView.reloadData()
             } else {
-                print("Not logged out")
+                // handle error
+                print("No Posts")
             }
         }
     }
-    override func viewDidLoad() {
-        super.viewDidLoad()
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        if(posts != nil){
+            return (posts?.count)!
 
-        // Do any additional setup after loading the view.
+        }else{
+            return 0
+        }
+    }
+    
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        if(posts != nil) {
+            let cell = tableView.dequeueReusableCell(withIdentifier: "PostCellTableViewCell", for: indexPath) as! PostCellTableViewCell
+            let post = posts![indexPath.row]
+            let caption = post.value(forKey: "caption")
+            let picture = post.value(forKey: "media") as! PFFile
+            if(picture != nil) {
+                picture.getDataInBackground({ (imageData: Data?, error: Error?) -> Void in
+                let image = UIImage(data: imageData!)
+                if image != nil {
+                    cell.picture.image = image
+                }
+            })
+            }
+            
+            cell.caption.text = caption as! String
+            
+            return cell
+        }
+        //cell.caption.text = "nothing"
+        let cell = tableView.dequeueReusableCell(withIdentifier: "PostCellTableViewCell", for: indexPath) as! PostCellTableViewCell
+
+        return cell
     }
 
     override func didReceiveMemoryWarning() {
@@ -32,15 +90,4 @@ class LoggedinViewController: UIViewController {
         // Dispose of any resources that can be recreated.
     }
     
-
-    /*
-    // MARK: - Navigation
-
-    // In a storyboard-based application, you will often want to do a little preparation before navigation
-    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
-        // Get the new view controller using segue.destinationViewController.
-        // Pass the selected object to the new view controller.
-    }
-    */
-
 }
