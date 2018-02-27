@@ -16,7 +16,7 @@ class LoggedinViewController: UIViewController, UITableViewDataSource {
     var posts: [PFObject]?
     
     @IBAction func onCompose(_ sender: Any) {
-        self.performSegue(withIdentifier: "composeSegue", sender: nil)
+            NotificationCenter.default.post(name: NSNotification.Name("didCompose"), object: nil)
     }
     @IBAction func onLogout(_ sender: Any) {
         NotificationCenter.default.post(name: NSNotification.Name("didLogout"), object: nil)
@@ -49,7 +49,7 @@ class LoggedinViewController: UIViewController, UITableViewDataSource {
                 // do something with the array of object returned by the call
                 for post in posts {
                     // access the object as a dictionary and cast type
-                    print(post.value(forKey: "caption") as! String)
+                    //print(post.value(forKey: "caption") as! String)
                     //post.value(forKey: "image") as! UIImage
                     
                 }
@@ -95,6 +95,14 @@ class LoggedinViewController: UIViewController, UITableViewDataSource {
         let cell = tableView.dequeueReusableCell(withIdentifier: "PostCellTableViewCell", for: indexPath) as! PostCellTableViewCell
 
         return cell
+    }
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
+        let cell = sender as! UITableViewCell
+        if let indexPath = tableView.indexPath(for: cell) {
+            let post = posts?[indexPath.row]
+            let detailViewController = segue.destination as! DetailViewController
+            detailViewController.post = post
+        }
     }
 
     

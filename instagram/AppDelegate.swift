@@ -49,7 +49,20 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
             print("Share")
             self.goToHomeFeed()
         }
+        NotificationCenter.default.addObserver(forName: Notification.Name("didCompose"), object: nil, queue: OperationQueue.main) { (Notification) in
+            print("Compose")
+            self.goToCompose()
+        }
         return true
+    }
+    
+    func goToCompose() {
+        let storyboard = UIStoryboard(name: "Main", bundle: nil)
+        // view controller currently being set in Storyboard as default will be overridden
+        //   let loggedInViewController = storyboard.instantiateViewController(withIdentifier: "tabBar")
+        // self.window?.rootViewController = loggedInViewController
+        let loginViewController = storyboard.instantiateViewController(withIdentifier: "compose")//PUT_YOUR_LOGIN_VC_ID_HERE
+        window?.rootViewController = loginViewController
     }
     func goToHomeFeed() {
         let storyboard = UIStoryboard(name: "Main", bundle: nil)
